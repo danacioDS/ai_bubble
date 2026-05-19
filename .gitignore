@@ -1,0 +1,14 @@
+__pycache__/
+*.pyc
+venv/
+.env
+.ipynb_checkpoints/
+notebooks/
+*.egg-info/
+dist/
+build/
+node_modules/
+.vite/
+.pnpm/
+*.tsbuildinfo
+*.map

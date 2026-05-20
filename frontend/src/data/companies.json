@@ -1,0 +1,115 @@
+[
+  {
+    "name": "Financial Services (Mixed Risk)",
+    "icon": "\ud83c\udfe6",
+    "companies": [
+      { "ticker": "JPM", "name": "JPMorgan Chase" },
+      { "ticker": "BAC", "name": "Bank of America" },
+      { "ticker": "WFC", "name": "Wells Fargo" },
+      { "ticker": "GS", "name": "Goldman Sachs" },
+      { "ticker": "MS", "name": "Morgan Stanley" },
+      { "ticker": "SCHW", "name": "Charles Schwab" }
+    ]
+  },
+  {
+    "name": "Technology (Growth + High Volatility)",
+    "icon": "\ud83d\udcbb",
+    "companies": [
+      { "ticker": "AAPL", "name": "Apple" },
+      { "ticker": "MSFT", "name": "Microsoft" },
+      { "ticker": "GOOGL", "name": "Alphabet" },
+      { "ticker": "AMZN", "name": "Amazon" },
+      { "ticker": "META", "name": "Meta Platforms" },
+      { "ticker": "NVDA", "name": "NVIDIA" },
+      { "ticker": "TSLA", "name": "Tesla" },
+      { "ticker": "AMD", "name": "Advanced Micro Devices" },
+      { "ticker": "INTC", "name": "Intel" },
+      { "ticker": "ORCL", "name": "Oracle" }
+    ]
+  },
+  {
+    "name": "Healthcare & Biotech",
+    "icon": "\ud83c\udfe5",
+    "companies": [
+      { "ticker": "JNJ", "name": "Johnson & Johnson" },
+      { "ticker": "PFE", "name": "Pfizer" },
+      { "ticker": "MRK", "name": "Merck" },
+      { "ticker": "UNH", "name": "UnitedHealth" },
+      { "ticker": "ABBV", "name": "AbbVie" },
+      { "ticker": "BMY", "name": "Bristol-Myers Squibb" },
+      { "ticker": "GILD", "name": "Gilead Sciences" },
+      { "ticker": "AMGN", "name": "Amgen" },
+      { "ticker": "REGN", "name": "Regeneron" },
+      { "ticker": "BIIB", "name": "Biogen" }
+    ]
+  },
+  {
+    "name": "Energy & Commodities",
+    "icon": "\ud83d\udee2\ufe0f",
+    "companies": [
+      { "ticker": "XOM", "name": "ExxonMobil" },
+      { "ticker": "CVX", "name": "Chevron" },
+      { "ticker": "COP", "name": "ConocoPhillips" },
+      { "ticker": "SLB", "name": "Schlumberger" },
+      { "ticker": "OXY", "name": "Occidental Petroleum" }
+    ]
+  },
+  {
+    "name": "Industrials & Manufacturing",
+    "icon": "\ud83c\udfed",
+    "companies": [
+      { "ticker": "CAT", "name": "Caterpillar" },
+      { "ticker": "BA", "name": "Boeing" },
+      { "ticker": "HON", "name": "Honeywell" },
+      { "ticker": "UPS", "name": "United Parcel Service" },
+      { "ticker": "DE", "name": "Deere & Co" },
+      { "ticker": "LMT", "name": "Lockheed Martin" }
+    ]
+  },
+  {
+    "name": "Consumer (Defensive + Cyclical)",
+    "icon": "\ud83d\udecd\ufe0f",
+    "companies": [
+      { "ticker": "PG", "name": "Procter & Gamble" },
+      { "ticker": "KO", "name": "Coca-Cola" },
+      { "ticker": "PEP", "name": "PepsiCo" },
+      { "ticker": "WMT", "name": "Walmart" },
+      { "ticker": "COST", "name": "Costco" },
+      { "ticker": "NKE", "name": "Nike" },
+      { "ticker": "MCD", "name": "McDonald's" }
+    ]
+  },
+  {
+    "name": "Auto & Mobility",
+    "icon": "\ud83d\ude97",
+    "companies": [
+      { "ticker": "F", "name": "Ford" },
+      { "ticker": "GM", "name": "General Motors" },
+      { "ticker": "TM", "name": "Toyota" },
+      { "ticker": "HMC", "name": "Honda" }
+    ]
+  },
+  {
+    "name": "Communication / Media",
+    "icon": "\ud83d\udce1",
+    "companies": [
+      { "ticker": "NFLX", "name": "Netflix" },
+      { "ticker": "DIS", "name": "Disney" },
+      { "ticker": "CMCSA", "name": "Comcast" },
+      { "ticker": "T", "name": "AT&T" },
+      { "ticker": "VZ", "name": "Verizon" }
+    ]
+  },
+  {
+    "name": "High-Risk / Speculative Growth",
+    "icon": "\ud83e\uddea",
+    "companies": [
+      { "ticker": "PLTR", "name": "Palantir" },
+      { "ticker": "SNOW", "name": "Snowflake" },
+      { "ticker": "COIN", "name": "Coinbase" },
+      { "ticker": "ROKU", "name": "Roku" },
+      { "ticker": "UBER", "name": "Uber" },
+      { "ticker": "SHOP", "name": "Shopify" }
+    ]
+  }
+]

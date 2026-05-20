@@ -1,5 +1,7 @@
 <template>
   <div class="analyzer">
+    <CompanyList @select="onSelect" :selectedTicker="ticker" />
+
     <div class="search-box">
       <input
         v-model="ticker"
@@ -19,6 +21,9 @@
         <div>
           <h2>{{ data.name || data.ticker }}</h2>
           <span class="ticker-badge">{{ data.ticker }}</span>
+          <span v-if="data.riskLabel" class="risk-badge" :class="'risk-' + riskLabelClass(data.riskLabel)">
+            {{ data.riskLabel }}
+          </span>
         </div>
         <div class="score-ring" :class="scoreClass">
           <svg viewBox="0 0 36 36" class="ring-svg">
@@ -57,7 +62,7 @@
         <div class="metric">
           <span class="metric-label">Rev. Growth</span>
           <span class="metric-value" :class="{ warn: data.metrics.revenueGrowth > 0.3 }">
-            {{ data.metrics.revenueGrowth != null ? (data.metrics.revenueGrowth * 100).toFixed(1) + '%' : '--' }}
+            {{ data.metrics.revenueGrowthDisplay }}
           </span>
         </div>
         <div class="metric">
@@ -68,7 +73,7 @@
         </div>
         <div class="metric">
           <span class="metric-label">Market Cap</span>
-          <span class="metric-value">{{ formatMarketCap(data.metrics.marketCap) }}</span>
+          <span class="metric-value">{{ data.metrics.marketCapDisplay }}</span>
         </div>
       </div>
 
@@ -100,8 +105,9 @@
 
 <script setup>
 import { ref, computed } from 'vue'
-
-const API_BASE = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000'
+import CompanyList from './CompanyList.vue'
+import { fetchStockData, fetchStockHistory } from '../services/api.js'
+import { mapStockResponse, toErrorMessage } from '../services/mappers.js'
 
 let currentController = null
 
@@ -151,6 +157,11 @@ const chartPoints = computed(() => {
     .join(' ')
 })
 
+function onSelect(tickerValue) {
+  ticker.value = tickerValue
+  analyze()
+}
+
 async function analyze() {
   if (!ticker.value.trim()) return
 
@@ -166,36 +177,31 @@ async function analyze() {
   prices.value = []
 
   try {
-    const [stockRes, histRes] = await Promise.all([
-      fetch(`${API_BASE}/stock/${ticker.value}`, { signal }),
-      fetch(`${API_BASE}/stock/${ticker.value}/history`, { signal }),
+    const [stockData, histData] = await Promise.all([
+      fetchStockData(ticker.value, { signal }),
+      fetchStockHistory(ticker.value, { signal }),
     ])
 
-    if (!stockRes.ok) {
-      throw new Error(`API error: ${stockRes.status}`)
-    }
-    if (!histRes.ok) {
-      throw new Error(`History API error: ${histRes.status}`)
-    }
-
-    data.value = await stockRes.json()
-    const histData = await histRes.json()
+    data.value = mapStockResponse(stockData)
     prices.value = histData.prices || []
   } catch (e) {
     if (e.name === 'AbortError') return
-    error.value = e.message
+    error.value = toErrorMessage(e)
   } finally {
     loading.value = false
   }
 }
 
-function formatMarketCap(cap) {
-  if (!cap) return '--'
-  if (cap >= 1e12) return (cap / 1e12).toFixed(2) + 'T'
-  if (cap >= 1e9) return (cap / 1e9).toFixed(2) + 'B'
-  if (cap >= 1e6) return (cap / 1e6).toFixed(2) + 'M'
-  return cap
+function riskLabelClass(label) {
+  if (label.includes('very high')) return 'very-high'
+  if (label.includes('high')) return 'high'
+  if (label.includes('medium/high')) return 'med-high'
+  if (label.includes('low/medium')) return 'low-med'
+  if (label.includes('medium')) return 'med'
+  if (label.includes('low')) return 'low'
+  return ''
 }
+
 </script>
 
 <style scoped>
@@ -275,7 +281,24 @@ function formatMarketCap(cap) {
   border-radius: 4px;
   font-size: 0.8rem;
   color: #94a3b8;
+  margin-right: 0.35rem;
 }
+
+.risk-badge {
+  display: inline-block;
+  padding: 0.15rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.risk-low { background: #052e16; color: #4ade80; }
+.risk-low-med { background: #052e16; color: #86efac; }
+.risk-med { background: #422006; color: #eab308; }
+.risk-med-high { background: #451a03; color: #fb923c; }
+.risk-high { background: #450a0a; color: #f87171; }
+.risk-very-high { background: #7f1d1d; color: #fca5a5; }
 
 .score-ring {
   text-align: center;

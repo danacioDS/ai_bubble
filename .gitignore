@@ -1,6 +1,7 @@
 __pycache__/
 *.pyc
 venv/
+backend/venv/
 .env
 .ipynb_checkpoints/
 notebooks/
@@ -12,3 +13,4 @@ node_modules/
 .pnpm/
 *.tsbuildinfo
 *.map
+backend/package-lock.json

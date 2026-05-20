@@ -5,7 +5,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 import pandas as pd
 import numpy as np
-from indicators import bubble_score
+from app.indicators import bubble_score
 
 
 def make_hist(close_prices):
@@ -37,6 +37,7 @@ def test_safe_case():
 
 
 def test_warning_range():
+    np.random.seed(42)
     hist = make_hist(np.linspace(100, 130, 200) + np.random.normal(0, 3, 200))
     score, reasons = bubble_score({
         "trailingPE": 35,
@@ -93,3 +94,27 @@ def test_volatility_momentum_with_hist():
     }, hist)
 
     assert 0 <= score <= 9
+
+
+def test_contract_openapi_schema():
+    from fastapi.testclient import TestClient
+    from app.main import app
+    client = TestClient(app)
+    res = client.get("/openapi.json")
+    assert res.status_code == 200
+    schema = res.json()
+    assert "paths" in schema
+    assert "/stock/{ticker}" in schema["paths"]
+    assert "/health" in schema["paths"]
+    assert "/health/live" in schema["paths"]
+    assert "/health/ready" in schema["paths"]
+
+
+def test_scoring_snapshot_known_input():
+    score, reasons = bubble_score({
+        "trailingPE": 45,
+        "revenueGrowth": 0.35,
+        "priceToBook": 15,
+    })
+    assert score == 5
+    assert len(reasons) == 5

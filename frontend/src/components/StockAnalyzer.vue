@@ -48,27 +48,27 @@
         </div>
         <div class="metric">
           <span class="metric-label">P/E</span>
-          <span class="metric-value" :class="{ warn: data.pe > 30 }">{{ data.pe ?? '--' }}</span>
+          <span class="metric-value" :class="{ warn: data.metrics.pe > 30 }">{{ data.metrics.pe ?? '--' }}</span>
         </div>
         <div class="metric">
           <span class="metric-label">Forward P/E</span>
-          <span class="metric-value">{{ data.forwardPe ?? '--' }}</span>
+          <span class="metric-value">{{ data.metrics.forwardPe ?? '--' }}</span>
         </div>
         <div class="metric">
           <span class="metric-label">Rev. Growth</span>
-          <span class="metric-value" :class="{ warn: data.revenueGrowth > 0.3 }">
-            {{ data.revenueGrowth != null ? (data.revenueGrowth * 100).toFixed(1) + '%' : '--' }}
+          <span class="metric-value" :class="{ warn: data.metrics.revenueGrowth > 0.3 }">
+            {{ data.metrics.revenueGrowth != null ? (data.metrics.revenueGrowth * 100).toFixed(1) + '%' : '--' }}
           </span>
         </div>
         <div class="metric">
           <span class="metric-label">P/B</span>
-          <span class="metric-value" :class="{ warn: data.priceToBook > 10 }">
-            {{ data.priceToBook ?? '--' }}
+          <span class="metric-value" :class="{ warn: data.metrics.priceToBook > 10 }">
+            {{ data.metrics.priceToBook ?? '--' }}
           </span>
         </div>
         <div class="metric">
           <span class="metric-label">Market Cap</span>
-          <span class="metric-value">{{ formatMarketCap(data.marketCap) }}</span>
+          <span class="metric-value">{{ formatMarketCap(data.metrics.marketCap) }}</span>
         </div>
       </div>
 
@@ -101,6 +101,10 @@
 <script setup>
 import { ref, computed } from 'vue'
 
+const API_BASE = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000'
+
+let currentController = null
+
 const ticker = ref('')
 const data = ref(null)
 const prices = ref([])
@@ -112,7 +116,7 @@ const chartH = 200
 
 const scorePercent = computed(() => {
   if (!data.value) return 0
-  return Math.min((data.value.score / 8) * 100, 100)
+  return Math.min((data.value.score / 9) * 100, 100)
 })
 
 const scoreClass = computed(() => {
@@ -149,6 +153,13 @@ const chartPoints = computed(() => {
 
 async function analyze() {
   if (!ticker.value.trim()) return
+
+  if (currentController) {
+    currentController.abort()
+  }
+  currentController = new AbortController()
+  const { signal } = currentController
+
   loading.value = true
   error.value = ''
   data.value = null
@@ -156,18 +167,22 @@ async function analyze() {
 
   try {
     const [stockRes, histRes] = await Promise.all([
-      fetch(`http://127.0.0.1:8000/stock/${ticker.value}`),
-      fetch(`http://127.0.0.1:8000/stock/${ticker.value}/history`),
+      fetch(`${API_BASE}/stock/${ticker.value}`, { signal }),
+      fetch(`${API_BASE}/stock/${ticker.value}/history`, { signal }),
     ])
 
     if (!stockRes.ok) {
       throw new Error(`API error: ${stockRes.status}`)
+    }
+    if (!histRes.ok) {
+      throw new Error(`History API error: ${histRes.status}`)
     }
 
     data.value = await stockRes.json()
     const histData = await histRes.json()
     prices.value = histData.prices || []
   } catch (e) {
+    if (e.name === 'AbortError') return
     error.value = e.message
   } finally {
     loading.value = false

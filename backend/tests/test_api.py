@@ -11,7 +11,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 os.environ["RATE_LIMIT_MAX"] = "1000"
 os.environ["RATE_LIMIT_WINDOW"] = "1"
 
-from app.main import app
+from .main import app
 
 client = TestClient(app)
 

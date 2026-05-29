@@ -6,7 +6,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from app.finance import get_stock_data
+from .finance import get_stock_data
 
 
 def _make_mock_ticker():

@@ -1,16 +1,23 @@
+# frontend/Dockerfile
 FROM node:22-slim AS build
 
 WORKDIR /app
-RUN npm install -g pnpm@11.1.3
 
-COPY package.json pnpm-lock.yaml ./
-RUN pnpm install --frozen-lockfile
+# Copiar solo package.json primero
+COPY package.json ./
 
+# Instalar dependencias limpiamente
+RUN npm install
+
+# Copiar el resto del código (excluyendo node_modules)
 COPY . .
-RUN pnpm build
 
+# Build
+RUN npm run build
 
 FROM nginx:alpine
+
+COPY nginx.conf /etc/nginx/conf.d/default.conf
 
 COPY --from=build /app/dist /usr/share/nginx/html
 

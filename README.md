@@ -1,18 +1,19 @@
 # AI Bubble Detector
 
-Detect overvaluation signals in AI-related stocks using fundamental and technical indicators. Backend powered by FastAPI / Yahoo Finance, frontend built with Vue 3 + Vite.
+Detect overvaluation signals in AI-related stocks using fundamental and technical indicators. Backend powered by FastAPI + Yahoo Finance, frontend built with Vue 3 + Vite.
 
 ## Features
 
 - **Bubble Score** — heuristic risk score (0–9) based on P/E, revenue growth, P/B, volatility, and momentum
-- **Live Data** — fetches real-time fundamentals and price history via Yahoo Finance
+- **Live Data** — real-time fundamentals and price history via Yahoo Finance
 - **SVG Score Ring** — visual indicator with Stable / Elevated / Speculative / Bubble Risk thresholds
 - **Price History Chart** — 6-month normalized SVG polyline
 - **Request Cancellation** — AbortController prevents stale responses during rapid searches
 - **Server-Side Caching** — 5-minute TTL cache reduces Yahoo Finance API calls
-- **Structured Logging** — timestamped, hierarchical logger output across all modules
-- **Timeout Handling** — configurable SIGALRM-based timeout for upstream requests
-- **Health Check** — `GET /health` endpoint for monitoring
+- **Structured Logging** — JSON-formatted logs with request IDs and latency
+- **Rate Limiting** — 60 requests/minute per IP
+- **Timeout Handling** — configurable timeout for upstream requests
+- **Health Checks** — `/health`, `/health/live`, `/health/ready` endpoints
 - **Full Test Suite** — 15 tests covering contracts, scoring, and integration
 - **Docker Support** — one-command full-stack deployment
 - **GitHub Actions CI** — automated pytest + build on every push
@@ -66,24 +67,33 @@ Detect overvaluation signals in AI-related stocks using fundamental and technica
 │  GET  /stock/{ticker}        → Bubble analysis           │
 │  GET  /stock/{ticker}/history → Historical prices        │
 │                                                          │
-│  Logging:    structured (timestamp + level + module)     │
-│  Timeouts:   SIGALRM (configurable, fallback-safe)       │
+│  Logging:    structured JSON (timestamp + level + module) │
+│  Rate limit: 60 req/min per IP (in-memory sliding window)│
+│  Timeouts:   ThreadPoolExecutor (configurable, fallback)  │
 └───────────────────────┬──────────────────────────────────┘
                         │
                         ▼
-                Yahoo Finance (live data)
+                 Yahoo Finance (live data)
 ```
 
 ## API Endpoints
 
 ### GET /health
 
-Returns service status.
+```json
+{ "status": "ok" }
+```
+
+### GET /health/live
 
 ```json
-{
-  "status": "ok"
-}
+{ "status": "alive" }
+```
+
+### GET /health/ready
+
+```json
+{ "status": "ready" }
 ```
 
 ### GET /stock/{ticker}
@@ -103,6 +113,7 @@ Analyze a stock for bubble risk.
     "marketCap": 2200000000000
   },
   "score": 8,
+  "riskLabel": "high",
   "reasons": [
     "P/E very high (75.2)",
     "Strong revenue growth (85.0%)",
@@ -112,8 +123,6 @@ Analyze a stock for bubble risk.
 ```
 
 ### GET /stock/{ticker}/history
-
-Get 6-month price history.
 
 ```json
 {
@@ -130,6 +139,7 @@ Get 6-month price history.
 |--------|---------|
 | 400 | Invalid ticker format |
 | 404 | Ticker not found / no data |
+| 429 | Rate limit exceeded |
 | 504 | Upstream finance provider timeout |
 
 Interactive API docs available at `http://localhost:8000/docs`.
@@ -141,18 +151,19 @@ Interactive API docs available at `http://localhost:8000/docs`.
 ```bash
 cd backend
 python -m venv venv && source venv/bin/activate
-cp .env.example .env            # optional: configure YAHOO_TIMEOUT, CACHE_TTL
+cp .env.example .env
 pip install -r requirements.txt
+python -m uvicorn app.main:app --reload
 uvicorn main:app --reload
 # http://127.0.0.1:8000
-# Interactive docs at http://127.0.0.1:8000/docs
+# API docs at http://127.0.0.1:8000/docs
 ```
 
 ### Frontend
 
 ```bash
 cd frontend
-cp .env.example .env            # optional: configure VITE_API_URL
+cp .env.example .env
 npm install
 npm run dev
 # http://localhost:5173
@@ -172,8 +183,6 @@ docker compose up --build
 
 ## Environment Configuration
 
-Copy the example env files:
-
 ```bash
 cp backend/.env.example backend/.env
 cp frontend/.env.example frontend/.env
@@ -185,6 +194,8 @@ cp frontend/.env.example frontend/.env
 |----------|---------|-------------|
 | `YAHOO_TIMEOUT` | 10 | Seconds before Yahoo Finance request times out |
 | `CACHE_TTL` | 300 | Cache expiry in seconds (5 min) |
+| `RATE_LIMIT_MAX` | 60 | Max requests per window |
+| `RATE_LIMIT_WINDOW` | 60 | Rate limit window in seconds |
 
 ### Frontend
 
@@ -207,13 +218,13 @@ python -m pytest tests/ -v
 | `tests/test_finance.py` | Finance contract tests | 2 | Return count, value types |
 | `tests/test_indicators.py` | Deterministic scoring fixtures | 8 | Extreme case, safe case, bounds fuzz (100 iters) |
 
-**15 tests total** — including live Yahoo Finance calls, schema validation, score bounds, and synthetic fixture tests.
+**15 tests total** — live Yahoo Finance calls, schema validation, score bounds, and synthetic fixture tests.
 
 ### Frontend
 
 ```bash
 cd frontend
-npm run build        # verify production build succeeds
+npm run build
 ```
 
 ## Scoring Methodology
@@ -223,15 +234,15 @@ npm run build        # verify production build succeeds
 | Indicator | Threshold | Points |
 |-----------|-----------|--------|
 | P/E Ratio | > 40 | +2 |
-| | > 30 (≤ 40) | +1 |
+|           | > 30 (≤ 40) | +1 |
 | Revenue Growth | > 30% | +2 |
-| | > 15% (≤ 30%) | +1 |
+|                | > 15% (≤ 30%) | +1 |
 | Price-to-Book | > 10 | +1 |
 | Daily Volatility (annualized) | > 50% | +1 |
 | 6-Month Momentum | > 50% | +2 |
-| | > 20% (≤ 50%) | +1 |
+|                  | > 20% (≤ 50%) | +1 |
 
-Missing data incurs fractional penalties instead of full indicator scores (max penalty: +1.8 across all 5 factors).
+Missing data incurs fractional penalties instead of full indicator scores (max penalty: +1.8 across 5 factors).
 
 ### Score Interpretation
 
@@ -244,36 +255,21 @@ Missing data incurs fractional penalties instead of full indicator scores (max p
 
 ## CI
 
-Every commit to `main` (and every PR) runs:
+Every push to `main` (and every PR) runs:
 
 ```yaml
 backend:
   - pytest (15 tests, Python 3.12)
-
 frontend:
-  - pnpm build (Vite production bundle)
+  - npm build (Vite production bundle)
 ```
 
-See `.github/workflows/ci.yml` for full pipeline definition.
+See `.github/workflows/ci.yml` for the full pipeline definition.
 
 ## Project Status
 
-This project began as a full-stack prototype and has been hardened through three passes:
+This project began as a full-stack prototype and has been hardened through iterative improvements covering caching, timeouts, structured logging, rate limiting, CI, and a complete test suite.
 
-| Pass | Focus | Output |
-|------|-------|--------|
-| 1 | Bugfix | Runtime crashes, schema mismatches, Docker networking |
-| 2 | Contracts | Pydantic models, integration tests, AbortController |
-| 3 | Production | Caching, timeouts, structured logging, CI, README |
+## License
 
-See `transcript.md` and `transcript_2.md` for the complete engineering review history.
-
-## Future Improvements
-
-- Add persistent caching (Redis) for Yahoo Finance responses
-- Migrate frontend to TypeScript
-- Add Vue Router for multiple views / comparison tool
-- Integrate professional chart library (Chart.js, D3)
-- Add rate limiting and API key authentication
-- Deploy frontend to Vercel + backend to Render/Railway
-- Add load testing and performance benchmarking
+MIT

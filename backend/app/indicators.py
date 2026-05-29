@@ -1,5 +1,5 @@
-from app.domain.features import extract_features
-from app.domain.scoring import evaluate_features
+from .domain.features import extract_features
+from .domain.scoring import evaluate_features
 
 
 def bubble_score(info, hist=None):

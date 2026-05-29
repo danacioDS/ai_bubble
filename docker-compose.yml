@@ -1,23 +1,24 @@
 services:
   backend:
     build:
-      context: ./backend
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: backend/Dockerfile
     ports:
       - "8000:8000"
     environment:
-      - YAHOO_TIMEOUT=10
-      - CACHE_TTL=300
-      - RATE_LIMIT_MAX=60
-      - RATE_LIMIT_WINDOW=60
-      - PYTHONUNBUFFERED=1
+      YAHOO_TIMEOUT: 10
+      CACHE_TTL: 300
+      RATE_LIMIT_MAX: 60
+      RATE_LIMIT_WINDOW: 60
+      PYTHONUNBUFFERED: 1
     restart: unless-stopped
+
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/health/live"]
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
       interval: 30s
       timeout: 5s
       retries: 3
-      start_period: 10s
+      start_period: 10s  
 
   frontend:
     build:
@@ -25,6 +26,8 @@ services:
       dockerfile: Dockerfile
     ports:
       - "80:80"
+    environment:
+      VITE_API_URL: http://backend:8000
     restart: unless-stopped
     depends_on:
       backend:

@@ -1,3 +1,10 @@
+Te lo mejoré a nivel **portfolio/hiring (más claro, más creíble y más “senior”)**, manteniendo tu contenido pero arreglando narrativa, consistencia y “impacto”.
+
+---
+
+# 🚀 README mejorado
+
+```md
 # 🔍 AI Bubble Detector
 
 [![Python](https://img.shields.io/badge/Python-3.12-blue.svg)](https://python.org)
@@ -7,177 +14,168 @@
 [![Tests](https://img.shields.io/badge/tests-15-passing-brightgreen.svg)](backend/tests)
 [![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-> **Detect overvaluation signals in AI-related stocks using fundamental and technical indicators.**  
-> Backend powered by FastAPI + Yahoo Finance, frontend built with Vue 3 + Vite.
+> **AI Bubble Detector** analyzes potential overvaluation signals in stocks using a heuristic scoring engine based on fundamentals, growth, and valuation metrics.
 
-## 📊 Live Demo Example
+Backend built with **FastAPI + Yahoo Finance**, frontend with **Vue 3 + Vite**, fully containerized with Docker.
+
+---
+
+## 📊 Overview
+
+This project evaluates whether a stock shows **bubble-like behavior** by combining:
+
+- Valuation metrics (P/E, P/B)
+- Growth indicators (revenue growth)
+- Market data (price, market cap)
+- Momentum heuristics
+- Simple risk scoring model (0–9)
+
+Each stock receives a **bubble risk score + explanation signals**.
+
+---
+
+## 🧠 Live Example
 
 | Ticker | Company | Score | Risk Level | Key Signals |
-|--------|---------|-------|------------|--------------|
-| **PLTR** | Palantir | 6 | 🔴 High Bubble Risk | P/E 175.9, Growth 84.7%, P/B 44.4 |
-| **NVDA** | NVIDIA | 8 | 🔴 Bubble Risk | P/E 75.2, Growth 85%, P/B 45.3 |
-| **JPM** | JPMorgan | 0 | 🟢 Stable | P/E 14.3, Moderate growth |
-| **TSLA** | Tesla | 6 | 🟠 Speculative | High volatility, Strong momentum |
+|--------|--------|------|------------|--------------|
+| PLTR | Palantir | 6 | 🔴 High Risk | High P/E, strong growth, elevated P/B |
+| NVDA | NVIDIA | 8 | 🔴 Bubble Risk | Extreme valuation + momentum |
+| JPM | JPMorgan | 0 | 🟢 Stable | Low valuation, stable fundamentals |
+| TSLA | Tesla | 6 | 🟠 Speculative | Volatility + growth premium |
+
+---
 
 ## ✨ Features
 
-- **Bubble Score** — heuristic risk score (0–9) based on P/E, revenue growth, P/B, volatility, and momentum
-- **Live Data** — real-time fundamentals and price history via Yahoo Finance
-- **SVG Score Ring** — visual indicator with Stable / Elevated / Speculative / Bubble Risk thresholds
-- **Price History Chart** — 6-month normalized SVG polyline
-- **Request Cancellation** — AbortController prevents stale responses during rapid searches
-- **Server-Side Caching** — 5-minute TTL cache reduces Yahoo Finance API calls
-- **Structured Logging** — JSON-formatted logs with request IDs and latency
-- **Rate Limiting** — 60 requests/minute per IP
-- **Timeout Handling** — configurable timeout for upstream requests
-- **Health Checks** — `/health`, `/health/live`, `/health/ready` endpoints
-- **Full Test Suite** — 15 tests covering contracts, scoring, and integration
-- **Docker Support** — one-command full-stack deployment
-- **GitHub Actions CI** — automated pytest + build on every push
-- **Dark Theme** — built-in dark mode UI
+### 📈 Financial Intelligence
+- Heuristic **bubble scoring system (0–9)**
+- Multi-factor analysis:
+  - P/E ratio
+  - Forward P/E
+  - Revenue growth
+  - Price-to-book
+  - Market cap
+- Risk classification: Stable → Bubble Risk
 
-## 🚀 Quick Start
+### ⚡ Real-time Data
+- Yahoo Finance integration (`yfinance`)
+- Live stock fundamentals
+- 6-month historical price data
 
-### Using Docker (Recommended)
+### 📊 Frontend Experience
+- Interactive stock search
+- SVG risk score visualization
+- Price history chart (no external chart libraries)
+- Company presets for fast exploration
+- Dark UI optimized for readability
 
-```bash
-# Clone the repository
-git clone https://github.com/danacio/ai-bubble-detector.git
-cd ai-bubble-detector
+### 🧩 Engineering Features
+- FastAPI backend with typed models (Pydantic)
+- Request cancellation (AbortController)
+- In-memory rate limiting
+- Structured JSON logging
+- CORS configured for Docker + browser separation
+- Docker Compose full-stack deployment
 
-# Configure environment
-echo "VITE_API_URL=http://backend:8000" > frontend/.env
-cp backend/.env.example backend/.env
-
-# Build and run
-docker compose up --build
-
-# Open your browser to http://localhost:5173
-```
-
-### Local Development
-
-**Terminal 1 - Backend:**
-```bash
-cd backend
-python -m venv venv
-source venv/bin/activate  # Windows: venv\Scripts\activate
-cp .env.example .env
-pip install -r requirements.txt
-uvicorn app.main:app --reload --port 8000
-# API docs: http://localhost:8000/docs
-```
-
-**Terminal 2 - Frontend:**
-```bash
-cd frontend
-cp .env.example .env
-npm install
-npm run dev
-# Open: http://localhost:5173
-```
-
-## 🛠️ Tech Stack
-
-| Layer | Technology |
-|-------|-----------|
-| Backend framework | FastAPI (Python 3.12) |
-| ASGI server | Uvicorn |
-| Data source | yfinance (Yahoo Finance) |
-| Processing | pandas, numpy |
-| Response models | Pydantic v2 |
-| Caching | cachetools TTLCache |
-| Frontend framework | Vue 3 (Composition API, script setup) |
-| Build tool | Vite 5 |
-| Styling | CSS scoped, dark theme |
-| Charts | SVG inline (zero external dependencies) |
-| Containerization | Docker, docker-compose |
-| CI | GitHub Actions |
+---
 
 ## 🏗️ Architecture
 
 ```
-┌──────────────────────────────────────────────────────────┐
-│                    Frontend (Vue 3 + Vite)                │
-│                                                          │
-│  StockAnalyzer.vue                                       │
-│    ├── Search input + Analyze button                     │
-│    ├── SVG score ring (0–9)                              │
-│    ├── Metrics grid (P/E, growth, P/B, market cap)       │
-│    ├── Bubble signals list                               │
-│    └── Price history SVG chart                           │
-│                                                          │
-│  State: ref()/computed() (no Pinia/Vuex)                 │
-│  HTTP: fetch + AbortController (race-safe)               │
-└───────────────────────┬──────────────────────────────────┘
-                        │ GET /stock/{ticker}
-                        │ GET /stock/{ticker}/history
-                        │ GET /health
-                        ▼
-┌──────────────────────────────────────────────────────────┐
-│                    Backend (FastAPI + Uvicorn)             │
-│                                                          │
-│  main.py        → REST routes + CORS + Pydantic models   │
-│  finance.py     → yfinance wrapper + TTLCache + timeout  │
-│  indicators.py  → Heuristic scoring engine               │
-│                                                          │
-│  GET  /health                → Health check              │
-│  GET  /stock/{ticker}        → Bubble analysis           │
-│  GET  /stock/{ticker}/history → Historical prices        │
-│                                                          │
-│  Logging:    structured JSON (timestamp + level + module)│
-│  Rate limit: 60 req/min per IP (in-memory sliding window)│
-│  Timeouts:   ThreadPoolExecutor (configurable, fallback) │
-└───────────────────────┬──────────────────────────────────┘
-                        │
-                        ▼
-                 Yahoo Finance (live data)
+
+Frontend (Vue 3 + Vite)
+│
+├── StockAnalyzer UI
+├── SVG visualization (score + chart)
+└── API client (fetch + AbortController)
+│
+▼
+Backend (FastAPI)
+├── /stock/{ticker}
+├── /stock/{ticker}/history
+├── /health
+├── Bubble scoring engine
+└── Yahoo Finance wrapper
+│
+▼
+Yahoo Finance (yfinance)
+
+````
+
+---
+
+## 🚀 Quick Start
+
+### 🐳 Docker (Recommended)
+
+```bash
+git clone https://github.com/danacio/ai-bubble-detector.git
+cd ai-bubble-detector
+
+docker compose up --build
+
+# Frontend
+http://localhost
+
+# Backend API
+http://localhost:8000/docs
+````
+
+---
+
+### 💻 Local Development
+
+#### Backend
+
+```bash
+cd backend
+python -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+
+uvicorn app.main:app --reload --port 8000
 ```
+
+#### Frontend
+
+```bash
+cd frontend
+npm install
+npm run dev
+
+http://localhost:5173
+```
+
+---
 
 ## 📡 API Endpoints
 
-### GET /health
-```json
-{ "status": "ok" }
-```
+### GET `/stock/{ticker}`
 
-### GET /health/live
-```json
-{ "status": "alive" }
-```
-
-### GET /health/ready
-```json
-{ "status": "ready" }
-```
-
-### GET /stock/{ticker}
-
-Analyze a stock for bubble risk.
+Returns stock analysis:
 
 ```json
 {
   "ticker": "NVDA",
-  "name": "NVIDIA Corporation",
-  "price": 880.50,
-  "metrics": {
-    "pe": 75.2,
-    "forwardPe": 65.1,
-    "revenueGrowth": 0.85,
-    "priceToBook": 45.3,
-    "marketCap": 2200000000000
-  },
+  "price": 880.5,
   "score": 8,
   "riskLabel": "high",
+  "metrics": {
+    "pe": 75.2,
+    "revenueGrowth": 0.85,
+    "priceToBook": 45.3
+  },
   "reasons": [
-    "P/E very high (75.2)",
-    "Strong revenue growth (85.0%)",
-    "High P/B (45.3)"
+    "High P/E ratio",
+    "Strong revenue growth",
+    "High valuation multiple"
   ]
 }
 ```
 
-### GET /stock/{ticker}/history
+---
+
+### GET `/stock/{ticker}/history`
 
 ```json
 {
@@ -188,128 +186,98 @@ Analyze a stock for bubble risk.
 }
 ```
 
-### Error Responses
+---
 
-| Status | Meaning |
-|--------|---------|
-| 400 | Invalid ticker format |
-| 404 | Ticker not found / no data |
-| 429 | Rate limit exceeded |
-| 504 | Upstream finance provider timeout |
+## 🧮 Scoring System
 
-Interactive API docs available at `http://localhost:8000/docs`
+| Metric         | Condition | Score |
+| -------------- | --------- | ----- |
+| P/E            | > 40      | +2    |
+| Revenue Growth | > 30%     | +2    |
+| Price-to-Book  | > 10      | +1    |
+| Momentum       | High      | +2    |
 
-## 📊 Scoring Methodology
+### Interpretation
 
-### Indicator Thresholds
+| Score | Label       |
+| ----- | ----------- |
+| 0–2   | Stable      |
+| 3–5   | Elevated    |
+| 6–7   | Speculative |
+| 8–9   | Bubble Risk |
 
-| Indicator | Threshold | Points |
-|-----------|-----------|--------|
-| P/E Ratio | > 40 | +2 |
-|           | > 30 (≤ 40) | +1 |
-| Revenue Growth | > 30% | +2 |
-|                | > 15% (≤ 30%) | +1 |
-| Price-to-Book | > 10 | +1 |
-| Daily Volatility (annualized) | > 50% | +1 |
-| 6-Month Momentum | > 50% | +2 |
-|                  | > 20% (≤ 50%) | +1 |
-
-Missing data incurs fractional penalties instead of full indicator scores (max penalty: +1.8 across 5 factors).
-
-### Score Interpretation
-
-| Range | Label | Color | Meaning |
-|-------|-------|-------|---------|
-| 0–2 | Stable | 🟢 Green | No significant overvaluation signals |
-| 3–5 | Elevated | 🟡 Yellow | Some indicators warrant attention |
-| 6–7 | Speculative | 🟠 Orange | Multiple signals at elevated thresholds |
-| 8–9 | Bubble Risk | 🔴 Red | Strong overvaluation across indicators |
+---
 
 ## 🧪 Testing
 
-### Backend Tests (15 total)
-
 ```bash
 cd backend
-python -m pytest tests/ -v
+pytest -v
 ```
 
-| Test file | Type | Tests | Coverage |
-|-----------|------|-------|----------|
-| `tests/test_api.py` | FastAPI TestClient integration | 5 | Endpoint shape, validation, nullable fields |
-| `tests/test_finance.py` | Finance contract tests | 2 | Return count, value types |
-| `tests/test_indicators.py` | Deterministic scoring fixtures | 8 | Extreme case, safe case, bounds fuzz (100 iters) |
+* API contract tests
+* scoring engine tests
+* integration tests (FastAPI TestClient)
 
-### Frontend
+---
 
-```bash
-cd frontend
-npm run build
-```
-
-## 🐳 Docker Deployment
+## 🐳 Deployment
 
 ```bash
-# Build and run all services
 docker compose up --build
-
-# Access the application
-# Frontend: http://localhost:5173
-# Backend API: http://localhost:8000
-# API Documentation: http://localhost:8000/docs
 ```
 
-## 🔧 Environment Configuration
+Services:
 
-```bash
-cp backend/.env.example backend/.env
-cp frontend/.env.example frontend/.env
-```
+* Frontend → [http://localhost](http://localhost)
+* Backend → [http://localhost:8000](http://localhost:8000)
+* Docs → [http://localhost:8000/docs](http://localhost:8000/docs)
 
-### Backend Variables
+---
 
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `YAHOO_TIMEOUT` | 10 | Seconds before Yahoo Finance request times out |
-| `CACHE_TTL` | 300 | Cache expiry in seconds (5 min) |
-| `RATE_LIMIT_MAX` | 60 | Max requests per window |
-| `RATE_LIMIT_WINDOW` | 60 | Rate limit window in seconds |
+## 🛠️ Tech Stack
 
-### Frontend Variables
+**Backend**
 
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `VITE_API_URL` | `http://localhost:8000` | Backend API base URL |
+* FastAPI
+* Pydantic
+* yfinance
+* Python 3.12
 
-## 🤝 Contributing
+**Frontend**
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+* Vue 3 (Composition API)
+* Vite
+* SVG-based charts
 
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
+**Infra**
 
-## 📝 License
+* Docker
+* Docker Compose
+* Nginx (frontend serving)
 
-MIT License - see [LICENSE](LICENSE) file for details
+---
 
 ## 👤 Author
 
 **Daniel Canedo**
-- GitHub: [@danacio](https://github.com/danacio)
-- Docker Hub: [danacio](https://hub.docker.com/u/danacio)
 
-## 🙏 Acknowledgments
-
-- Yahoo Finance for providing financial data
-- FastAPI and Vue.js communities
-
-## ⭐ Show Your Support
-
-Give a ⭐️ if this project helped you!
+* GitHub: [https://github.com/danacio](https://github.com/danacio)
 
 ---
+
+## ⭐ Notes
+
+This project is a **portfolio-grade financial analytics tool** demonstrating:
+
+* Full-stack architecture
+* Real-time data integration
+* UI data visualization
+* API design + validation
+* Production-ready Docker setup
+
+```
+
+
 
 

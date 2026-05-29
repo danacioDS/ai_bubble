@@ -2,7 +2,7 @@
 
 ## Descripción General
 
-Aplicación full-stack para detectar burbujas financieras en acciones usando datos fundamentales y técnicos. Backend en Python/FastAPI + frontend en Vue 3.
+Aplicación full-stack para detectar señales de sobrevaloración en acciones usando datos fundamentales y técnicos. Backend en Python/FastAPI + frontend en Vue 3.
 
 ---
 
@@ -22,7 +22,7 @@ Aplicación full-stack para detectar burbujas financieras en acciones usando dat
 │          └── Gráfico SVG de precio histórico                             │
 │                                                                          │
 │  API layer: services/api.js (fetch + AbortController)                    │
-│  Mappers:  services/mappers.js (API → UI transform)                     │
+│  Mappers:  services/mappers.js (API → UI transform, Intl.NumberFormat)  │
 │  Estado: ref()/computed() local (sin Pinia)                              │
 │  Puerto: 5173 (dev) / 80 (producción con nginx)                         │
 └──────────────────────┬───────────────────────────────────────────────────┘
@@ -79,13 +79,13 @@ Aplicación full-stack para detectar burbujas financieras en acciones usando dat
 | **Validación** | Pydantic v2 (BaseModel) |
 | **Caché** | cachetools TTLCache (128 entradas, 5min TTL, con versionado de schema) |
 | **Timeout** | ThreadPoolExecutor (cross-platform, no depende de SIGALRM) |
-| **Rate limiting** | In-memory (configurable por env) |
+| **Rate limiting** | In-memory sliding window (configurable por env) |
 | **Logging** | JSON estructurado con request_id + latencia |
 | **Estilos** | CSS scoped, tema oscuro (#0f172a) |
 | **Gráficos** | SVG inline (sin librerías externas) |
 | **Estado** | `ref()` / `computed()` local (sin Pinia/Vuex) |
 | **HTTP client** | `fetch()` nativo con `AbortController` |
-| **Mapper UI** | `services/mappers.js` (desacopla API de UI) |
+| **Formatter** | `Intl.NumberFormat` para precio, market cap y revenue growth |
 | **Base de datos** | Ninguna (stateless, datos en vivo) |
 | **Contenedores** | Docker multi-stage + docker-compose |
 | **CI** | GitHub Actions (pytest + pnpm build) |
@@ -99,12 +99,11 @@ ai_bubble/
 ├── .github/workflows/ci.yml    # CI pipeline
 ├── docker-compose.yml          # Orquestación backend + frontend
 ├── architecture.md             # Este documento
-├── transcript*.md              # Engineering journal (10 entradas)
 │
 ├── backend/
 │   ├── app/                    # ← Paquete principal
 │   │   ├── __init__.py
-│   │   ├── main.py             # FastAPI, rutas, CORS, middleware
+│   │   ├── main.py             # FastAPI, rutas, CORS (desde env), middleware
 │   │   ├── finance.py          # Data access (yfinance + caché)
 │   │   ├── indicators.py       # Facade del pipeline domain
 │   │   └── domain/
@@ -112,7 +111,7 @@ ai_bubble/
 │   │       ├── features.py     # Extracción de features (datos crudos → limpios)
 │   │       └── scoring.py      # Evaluación de reglas (pure, sin IO)
 │   ├── tests/
-│   │   ├── test_api.py         # 6 tests de API (yfinance mockeado)
+│   │   ├── test_api.py         # 7 tests de API (yfinance mockeado)
 │   │   ├── test_finance.py     # 4 tests de data layer (mockeado)
 │   │   └── test_indicators.py  # 10 tests: scoring + contract + snapshot
 │   ├── requirements.txt
@@ -145,14 +144,14 @@ ai_bubble/
 1. Usuario ingresa un ticker y hace clic en "Analyze"
 2. Frontend dispara en paralelo dos fetch a `VITE_API_URL` via `services/api.js`
 3. Backend pasa por middleware en orden: observability (request_id) → rate limiter
-4. `main.py` valida ticker con regex `^[A-Z]{1,5}$`
+4. `main.py` valida ticker con regex `^[A-Z]{1,5}(\.[A-Z])?$` (soporta BRK.B, BF.B)
 5. `finance.get_stock_data()` verifica caché TTLCache; si miss → `yf.Ticker` con timeout 10s
 6. Datos se normalizan a `StockData` Pydantic + se cachean con versión de schema
 7. `indicators.bubble_score()` orquesta el pipeline domain:
    - `features.extract_features()` → features limpias (pe, growth, pb, vol, momentum)
    - `scoring.evaluate_features()` → score + razones (puro, sin IO)
 8. Score (0–9) + riskLabel + razones se devuelven como `StockResponse`
-9. Frontent recibe JSON, pasa por `mapStockResponse()` en mappers.js, renderiza
+9. Frontend recibe JSON, pasa por `mapStockResponse()` en mappers.js (usa `Intl.NumberFormat`), renderiza
 
 ### Historial de Precios (`GET /stock/{ticker}/history`)
 
@@ -216,12 +215,14 @@ Score final: suma de puntos + penalizaciones, clamped a rango [0, 9], convertido
 4. **Dominio separado en dos capas** — `features.py` extrae features de datos crudos (contiene todo el `info.get()` y manipulación de DataFrames) mientras `scoring.py` es puro (solo evalúa reglas contra un dict de features). Esto permite cambiar la fuente de datos sin tocar la lógica de scoring, y viceversa.
 5. **Scoring data-driven** — Las reglas son estructuras de datos declarativas (`INFO_RULES` / `HIST_RULES`), no if/else hardcodeados. Permite tuning sin tocar código y futura carga desde config/DB.
 6. **Pydantic como contrato** — Domain models (`StockPoint`, `StockData`) y response models (`StockResponse`, `Metrics`) definen el schema en ambos lados de la serialización. Cache versionado con `CACHE_VERSION`.
-7. **YFinance mockeado en tests** — 20 tests deterministas que no dependen de red (~1s vs ~7s con llamadas reales). Incluye contract test (OpenAPI schema) y snapshot test (output conocido).
-8. **Frontend API layer + mappers** — `services/api.js` centraliza el HTTP, `services/mappers.js` desacopla la forma del API del modelo de UI. El frontend ya no depende directamente de `StockResponse`.
+7. **YFinance mockeado en tests** — 21 tests deterministas que no dependen de red (~1s vs ~7s con llamadas reales). Incluye contract test (OpenAPI schema), snapshot test (output conocido), y validación de ticker regex.
+8. **Frontend API layer + mappers** — `services/api.js` centraliza el HTTP, `services/mappers.js` desacopla la forma del API del modelo de UI y usa `Intl.NumberFormat` para formateo localizado de cifras.
 9. **Observabilidad** — Middleware que asigna `request_id` a cada request y mide `latency_ms`. Logs JSON estructurados con estos campos para trazabilidad.
 10. **SVG inline** — Sin librerías de gráficos. Anillo de score y línea de precio son SVG puro en el template.
 11. **Multi-stage Docker** — Frontend: build con node, serve con nginx (~25MB final). Backend: non-root user, Python 3.12-slim, healthcheck configurado.
 12. **Rate limiting** — 60 req/min por IP, configurable por variable de entorno.
+13. **CORS dinámico** — Orígenes permitidos se configuran via `CORS_ORIGINS` (comma-separated) para soportar múltiples entornos.
+14. **Ticker regex extendido** — `^[A-Z]{1,5}(\.[A-Z])?$` acepta tickers con sufijo de una letra (BRK.B, BF.B) además de los estándar.
 
 ---
 
@@ -235,8 +236,6 @@ cd backend
 cp .env.example .env
 pip install -r requirements.txt
 uvicorn app.main:app --reload
-# http://127.0.0.1:8000
-# Documentación: http://127.0.0.1:8000/docs
 ```
 
 Frontend:
@@ -245,7 +244,6 @@ cd frontend
 cp .env.example .env
 pnpm install
 pnpm dev
-# http://localhost:5173
 ```
 
 Tests:
@@ -257,7 +255,7 @@ python -m pytest tests/ -v
 ### Con Docker
 
 ```bash
-docker-compose up --build
+docker compose up --build
 # Backend: http://localhost:8000
 # Frontend: http://localhost:80
 ```
@@ -268,7 +266,7 @@ docker-compose up --build
 
 Dos jobs paralelos en cada push/PR a `main`:
 
-- **Backend**: Ubuntu + Python 3.12 → `pip install` → `pytest -v` (20 tests, sin red, ~1s)
+- **Backend**: Ubuntu + Python 3.12 → `pip install` → `pytest -v` (21 tests, sin red, ~1s)
 - **Frontend**: Ubuntu + Node 18 → pnpm → `install` → `build`
 
 Sin deploy automático — CI es únicamente de validación.

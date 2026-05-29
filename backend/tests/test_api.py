@@ -11,7 +11,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 os.environ["RATE_LIMIT_MAX"] = "1000"
 os.environ["RATE_LIMIT_WINDOW"] = "1"
 
-from .main import app
+from app.main import app
 
 client = TestClient(app)
 
@@ -97,6 +97,19 @@ def test_invalid_ticker_returns_400():
 
     res = client.get("/stock/")
     assert res.status_code == 404
+
+    res = client.get("/stock/BRK.BB")
+    assert res.status_code == 400
+
+    res = client.get("/stock/123")
+    assert res.status_code == 400
+
+
+@patch("app.finance.yf.Ticker")
+def test_dot_suffix_ticker_accepted(mock_ticker):
+    mock_ticker.return_value = _make_mock_stock()
+    res = client.get("/stock/BRK.B")
+    assert res.status_code != 400
 
 
 @patch("app.finance.yf.Ticker")

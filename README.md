@@ -1,8 +1,25 @@
-# AI Bubble Detector
+# 🔍 AI Bubble Detector
 
-Detect overvaluation signals in AI-related stocks using fundamental and technical indicators. Backend powered by FastAPI + Yahoo Finance, frontend built with Vue 3 + Vite.
+[![Python](https://img.shields.io/badge/Python-3.12-blue.svg)](https://python.org)
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.100+-green.svg)](https://fastapi.tiangolo.com)
+[![Vue](https://img.shields.io/badge/Vue-3.4-brightgreen.svg)](https://vuejs.org)
+[![Docker](https://img.shields.io/badge/Docker-✓-blue.svg)](https://docker.com)
+[![Tests](https://img.shields.io/badge/tests-15-passing-brightgreen.svg)](backend/tests)
+[![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-## Features
+> **Detect overvaluation signals in AI-related stocks using fundamental and technical indicators.**  
+> Backend powered by FastAPI + Yahoo Finance, frontend built with Vue 3 + Vite.
+
+## 📊 Live Demo Example
+
+| Ticker | Company | Score | Risk Level | Key Signals |
+|--------|---------|-------|------------|--------------|
+| **PLTR** | Palantir | 6 | 🔴 High Bubble Risk | P/E 175.9, Growth 84.7%, P/B 44.4 |
+| **NVDA** | NVIDIA | 8 | 🔴 Bubble Risk | P/E 75.2, Growth 85%, P/B 45.3 |
+| **JPM** | JPMorgan | 0 | 🟢 Stable | P/E 14.3, Moderate growth |
+| **TSLA** | Tesla | 6 | 🟠 Speculative | High volatility, Strong momentum |
+
+## ✨ Features
 
 - **Bubble Score** — heuristic risk score (0–9) based on P/E, revenue growth, P/B, volatility, and momentum
 - **Live Data** — real-time fundamentals and price history via Yahoo Finance
@@ -19,7 +36,48 @@ Detect overvaluation signals in AI-related stocks using fundamental and technica
 - **GitHub Actions CI** — automated pytest + build on every push
 - **Dark Theme** — built-in dark mode UI
 
-## Tech Stack
+## 🚀 Quick Start
+
+### Using Docker (Recommended)
+
+```bash
+# Clone the repository
+git clone https://github.com/danacio/ai-bubble-detector.git
+cd ai-bubble-detector
+
+# Configure environment
+echo "VITE_API_URL=http://backend:8000" > frontend/.env
+cp backend/.env.example backend/.env
+
+# Build and run
+docker compose up --build
+
+# Open your browser to http://localhost:5173
+```
+
+### Local Development
+
+**Terminal 1 - Backend:**
+```bash
+cd backend
+python -m venv venv
+source venv/bin/activate  # Windows: venv\Scripts\activate
+cp .env.example .env
+pip install -r requirements.txt
+uvicorn app.main:app --reload --port 8000
+# API docs: http://localhost:8000/docs
+```
+
+**Terminal 2 - Frontend:**
+```bash
+cd frontend
+cp .env.example .env
+npm install
+npm run dev
+# Open: http://localhost:5173
+```
+
+## 🛠️ Tech Stack
 
 | Layer | Technology |
 |-------|-----------|
@@ -36,7 +94,7 @@ Detect overvaluation signals in AI-related stocks using fundamental and technica
 | Containerization | Docker, docker-compose |
 | CI | GitHub Actions |
 
-## Architecture
+## 🏗️ Architecture
 
 ```
 ┌──────────────────────────────────────────────────────────┐
@@ -67,31 +125,28 @@ Detect overvaluation signals in AI-related stocks using fundamental and technica
 │  GET  /stock/{ticker}        → Bubble analysis           │
 │  GET  /stock/{ticker}/history → Historical prices        │
 │                                                          │
-│  Logging:    structured JSON (timestamp + level + module) │
+│  Logging:    structured JSON (timestamp + level + module)│
 │  Rate limit: 60 req/min per IP (in-memory sliding window)│
-│  Timeouts:   ThreadPoolExecutor (configurable, fallback)  │
+│  Timeouts:   ThreadPoolExecutor (configurable, fallback) │
 └───────────────────────┬──────────────────────────────────┘
                         │
                         ▼
                  Yahoo Finance (live data)
 ```
 
-## API Endpoints
+## 📡 API Endpoints
 
 ### GET /health
-
 ```json
 { "status": "ok" }
 ```
 
 ### GET /health/live
-
 ```json
 { "status": "alive" }
 ```
 
 ### GET /health/ready
-
 ```json
 { "status": "ready" }
 ```
@@ -142,92 +197,9 @@ Analyze a stock for bubble risk.
 | 429 | Rate limit exceeded |
 | 504 | Upstream finance provider timeout |
 
-Interactive API docs available at `http://localhost:8000/docs`.
+Interactive API docs available at `http://localhost:8000/docs`
 
-## Local Development
-
-### Backend
-
-```bash
-cd backend
-python -m venv venv && source venv/bin/activate
-cp .env.example .env
-pip install -r requirements.txt
-python -m uvicorn app.main:app --reload
-uvicorn main:app --reload
-# http://127.0.0.1:8000
-# API docs at http://127.0.0.1:8000/docs
-```
-
-### Frontend
-
-```bash
-cd frontend
-cp .env.example .env
-npm install
-npm run dev
-# http://localhost:5173
-```
-
-## Docker Setup
-
-```bash
-docker compose up --build
-```
-
-| Service | URL |
-|---------|-----|
-| Frontend | http://localhost:5173 |
-| Backend | http://localhost:8000 |
-| API docs | http://localhost:8000/docs |
-
-## Environment Configuration
-
-```bash
-cp backend/.env.example backend/.env
-cp frontend/.env.example frontend/.env
-```
-
-### Backend
-
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `YAHOO_TIMEOUT` | 10 | Seconds before Yahoo Finance request times out |
-| `CACHE_TTL` | 300 | Cache expiry in seconds (5 min) |
-| `RATE_LIMIT_MAX` | 60 | Max requests per window |
-| `RATE_LIMIT_WINDOW` | 60 | Rate limit window in seconds |
-
-### Frontend
-
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `VITE_API_URL` | `http://localhost:8000` | Backend API base URL |
-
-## Testing
-
-### Backend
-
-```bash
-cd backend
-python -m pytest tests/ -v
-```
-
-| Test file | Type | Tests | Coverage |
-|-----------|------|-------|----------|
-| `tests/test_api.py` | FastAPI TestClient integration | 5 | Endpoint shape, validation, nullable fields |
-| `tests/test_finance.py` | Finance contract tests | 2 | Return count, value types |
-| `tests/test_indicators.py` | Deterministic scoring fixtures | 8 | Extreme case, safe case, bounds fuzz (100 iters) |
-
-**15 tests total** — live Yahoo Finance calls, schema validation, score bounds, and synthetic fixture tests.
-
-### Frontend
-
-```bash
-cd frontend
-npm run build
-```
-
-## Scoring Methodology
+## 📊 Scoring Methodology
 
 ### Indicator Thresholds
 
@@ -248,28 +220,96 @@ Missing data incurs fractional penalties instead of full indicator scores (max p
 
 | Range | Label | Color | Meaning |
 |-------|-------|-------|---------|
-| 0–2 | Stable | Green | No significant overvaluation signals |
-| 3–5 | Elevated | Yellow | Some indicators warrant attention |
-| 6–7 | Speculative | Orange | Multiple signals at elevated thresholds |
-| 8–9 | Bubble Risk | Red | Strong overvaluation across indicators |
+| 0–2 | Stable | 🟢 Green | No significant overvaluation signals |
+| 3–5 | Elevated | 🟡 Yellow | Some indicators warrant attention |
+| 6–7 | Speculative | 🟠 Orange | Multiple signals at elevated thresholds |
+| 8–9 | Bubble Risk | 🔴 Red | Strong overvaluation across indicators |
 
-## CI
+## 🧪 Testing
 
-Every push to `main` (and every PR) runs:
+### Backend Tests (15 total)
 
-```yaml
-backend:
-  - pytest (15 tests, Python 3.12)
-frontend:
-  - npm build (Vite production bundle)
+```bash
+cd backend
+python -m pytest tests/ -v
 ```
 
-See `.github/workflows/ci.yml` for the full pipeline definition.
+| Test file | Type | Tests | Coverage |
+|-----------|------|-------|----------|
+| `tests/test_api.py` | FastAPI TestClient integration | 5 | Endpoint shape, validation, nullable fields |
+| `tests/test_finance.py` | Finance contract tests | 2 | Return count, value types |
+| `tests/test_indicators.py` | Deterministic scoring fixtures | 8 | Extreme case, safe case, bounds fuzz (100 iters) |
 
-## Project Status
+### Frontend
 
-This project began as a full-stack prototype and has been hardened through iterative improvements covering caching, timeouts, structured logging, rate limiting, CI, and a complete test suite.
+```bash
+cd frontend
+npm run build
+```
 
-## License
+## 🐳 Docker Deployment
 
-MIT
+```bash
+# Build and run all services
+docker compose up --build
+
+# Access the application
+# Frontend: http://localhost:5173
+# Backend API: http://localhost:8000
+# API Documentation: http://localhost:8000/docs
+```
+
+## 🔧 Environment Configuration
+
+```bash
+cp backend/.env.example backend/.env
+cp frontend/.env.example frontend/.env
+```
+
+### Backend Variables
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `YAHOO_TIMEOUT` | 10 | Seconds before Yahoo Finance request times out |
+| `CACHE_TTL` | 300 | Cache expiry in seconds (5 min) |
+| `RATE_LIMIT_MAX` | 60 | Max requests per window |
+| `RATE_LIMIT_WINDOW` | 60 | Rate limit window in seconds |
+
+### Frontend Variables
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `VITE_API_URL` | `http://localhost:8000` | Backend API base URL |
+
+## 🤝 Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
+
+## 📝 License
+
+MIT License - see [LICENSE](LICENSE) file for details
+
+## 👤 Author
+
+**Daniel Canedo**
+- GitHub: [@danacio](https://github.com/danacio)
+- Docker Hub: [danacio](https://hub.docker.com/u/danacio)
+
+## 🙏 Acknowledgments
+
+- Yahoo Finance for providing financial data
+- FastAPI and Vue.js communities
+
+## ⭐ Show Your Support
+
+Give a ⭐️ if this project helped you!
+
+---
+
+

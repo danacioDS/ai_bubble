@@ -6,12 +6,16 @@ export function mapStockResponse(data) {
   }
 }
 
+const priceFormat = new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+const pctFormat = new Intl.NumberFormat('en-US', { style: 'percent', minimumFractionDigits: 1, maximumFractionDigits: 1, signDisplay: 'exceptZero' })
+const capFormat = new Intl.NumberFormat('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 })
+
 function mapMetrics(m) {
   if (!m) return {}
   return {
     ...m,
     revenueGrowthDisplay: m.revenueGrowth != null
-      ? (m.revenueGrowth * 100).toFixed(1) + '%'
+      ? pctFormat.format(m.revenueGrowth)
       : '--',
     marketCapDisplay: formatMarketCap(m.marketCap),
   }
@@ -19,10 +23,10 @@ function mapMetrics(m) {
 
 function formatMarketCap(cap) {
   if (!cap) return '--'
-  if (cap >= 1e12) return (cap / 1e12).toFixed(2) + 'T'
-  if (cap >= 1e9) return (cap / 1e9).toFixed(2) + 'B'
-  if (cap >= 1e6) return (cap / 1e6).toFixed(2) + 'M'
-  return cap
+  if (cap >= 1e12) return capFormat.format(cap / 1e12) + 'T'
+  if (cap >= 1e9) return capFormat.format(cap / 1e9) + 'B'
+  if (cap >= 1e6) return capFormat.format(cap / 1e6) + 'M'
+  return priceFormat.format(cap)
 }
 
 export function toErrorMessage(error) {

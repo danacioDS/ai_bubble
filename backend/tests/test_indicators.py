@@ -5,7 +5,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 import pandas as pd
 import numpy as np
-from .indicators import bubble_score
+from app.indicators import bubble_score
 
 
 def make_hist(close_prices):
@@ -98,7 +98,7 @@ def test_volatility_momentum_with_hist():
 
 def test_contract_openapi_schema():
     from fastapi.testclient import TestClient
-    from .main import app
+    from app.main import app
     client = TestClient(app)
     res = client.get("/openapi.json")
     assert res.status_code == 200

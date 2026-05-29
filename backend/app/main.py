@@ -55,16 +55,22 @@ logger = logging.getLogger(__name__)
 
 app = FastAPI(title="AI Market Risk Intelligence Engine")
 
+# ✅ FIX CORS (DEV FRIENDLY)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],
+    allow_origins=[
+        "http://localhost",
+        "http://127.0.0.1",
+        "http://localhost:80",
+    ],
+    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
 
 # -----------------------------
-# Rate limiter (simple in-memory)
+# Rate limiter
 # -----------------------------
 
 class RateLimiter:
@@ -86,13 +92,14 @@ class RateLimiter:
         return True
 
 
-RATE_LIMIT_MAX = int(os.getenv("RATE_LIMIT_MAX", "60"))
-RATE_LIMIT_WINDOW = int(os.getenv("RATE_LIMIT_WINDOW", "60"))
-rate_limiter = RateLimiter(RATE_LIMIT_MAX, RATE_LIMIT_WINDOW)
+rate_limiter = RateLimiter(
+    int(os.getenv("RATE_LIMIT_MAX", "60")),
+    int(os.getenv("RATE_LIMIT_WINDOW", "60")),
+)
 
 
 # -----------------------------
-# Middleware (ORDER FIXED)
+# Middleware
 # -----------------------------
 
 @app.middleware("http")
@@ -109,10 +116,7 @@ async def observability_middleware(request: Request, call_next):
 
     logger.info(
         "Request completed",
-        extra={
-            "request_id": request_id,
-            "latency_ms": latency_ms,
-        },
+        extra={"request_id": request_id, "latency_ms": latency_ms},
     )
 
     return response
@@ -123,10 +127,7 @@ async def rate_limit_middleware(request: Request, call_next):
     client_ip = request.client.host if request.client else "unknown"
 
     if not rate_limiter.is_allowed(client_ip):
-        return JSONResponse(
-            status_code=429,
-            content={"detail": "Too many requests"},
-        )
+        return JSONResponse(status_code=429, content={"detail": "Too many requests"})
 
     return await call_next(request)
 
@@ -166,7 +167,7 @@ class HistoryResponse(BaseModel):
 # Helpers
 # -----------------------------
 
-TICKER_RE = re.compile(r"^[A-Z]{1,5}$")
+TICKER_RE = re.compile(r"^[A-Z]{1,5}(\.[A-Z])?$")
 
 
 def validate_ticker(ticker: str) -> str:
@@ -196,7 +197,7 @@ def score_to_risk_label(score: int) -> str:
 
 
 # -----------------------------
-# Root (portfolio-friendly)
+# Routes
 # -----------------------------
 
 @app.get("/")
@@ -209,28 +210,10 @@ def root():
     }
 
 
-# -----------------------------
-# Health endpoints
-# -----------------------------
-
 @app.get("/health")
 def health():
     return {"status": "ok"}
 
-
-@app.get("/health/live")
-def health_live():
-    return {"status": "alive"}
-
-
-@app.get("/health/ready")
-def health_ready():
-    return {"status": "ready"}
-
-
-# -----------------------------
-# Stock analysis
-# -----------------------------
 
 @app.get("/stock/{ticker}", response_model=StockResponse)
 def get_stock(ticker: str):
@@ -259,10 +242,6 @@ def get_stock(ticker: str):
         reasons=reasons,
     )
 
-
-# -----------------------------
-# History endpoint
-# -----------------------------
 
 @app.get("/stock/{ticker}/history", response_model=HistoryResponse)
 def get_history(ticker: str):

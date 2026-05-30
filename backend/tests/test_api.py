@@ -98,7 +98,7 @@ def test_invalid_ticker_returns_400():
     res = client.get("/stock/")
     assert res.status_code == 404
 
-    res = client.get("/stock/BRK.BB")
+    res = client.get("/stock/BRK.BBB")
     assert res.status_code == 400
 
     res = client.get("/stock/123")
@@ -109,6 +109,13 @@ def test_invalid_ticker_returns_400():
 def test_dot_suffix_ticker_accepted(mock_ticker):
     mock_ticker.return_value = _make_mock_stock()
     res = client.get("/stock/BRK.B")
+    assert res.status_code != 400
+
+
+@patch("app.finance.yf.Ticker")
+def test_european_ticker_accepted(mock_ticker):
+    mock_ticker.return_value = _make_mock_stock()
+    res = client.get("/stock/SAN.MC")
     assert res.status_code != 400
 
 

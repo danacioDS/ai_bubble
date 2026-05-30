@@ -1,22 +1,21 @@
-Te lo mejoré a nivel **portfolio/hiring (más claro, más creíble y más “senior”)**, manteniendo tu contenido pero arreglando narrativa, consistencia y “impacto”.
-
----
-
-# 🚀 README mejorado
-
-```md
 # 🔍 AI Bubble Detector
 
 [![Python](https://img.shields.io/badge/Python-3.12-blue.svg)](https://python.org)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.100+-green.svg)](https://fastapi.tiangolo.com)
 [![Vue](https://img.shields.io/badge/Vue-3.4-brightgreen.svg)](https://vuejs.org)
 [![Docker](https://img.shields.io/badge/Docker-✓-blue.svg)](https://docker.com)
-[![Tests](https://img.shields.io/badge/tests-15-passing-brightgreen.svg)](backend/tests)
+[![Tests](https://img.shields.io/badge/tests-22-passing-brightgreen.svg)](backend/tests)
 [![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-> **AI Bubble Detector** analyzes potential overvaluation signals in stocks using a heuristic scoring engine based on fundamentals, growth, and valuation metrics.
+> **AI Bubble Detector** analyzes potential overvaluation signals in stocks using a heuristic scoring engine driven by fundamentals, growth, and valuation metrics.
 
 Backend built with **FastAPI + Yahoo Finance**, frontend with **Vue 3 + Vite**, fully containerized with Docker.
+
+---
+
+## ⚠️ Disclaimer
+
+The Bubble Score is a heuristic indicator based on fixed thresholds (P/E, momentum, volatility). It has not been backtested or calibrated against historical data. It is not financial advice and should not be used as the sole basis for investment decisions.
 
 ---
 
@@ -34,10 +33,10 @@ Each stock receives a **bubble risk score + explanation signals**.
 
 ---
 
-## 🧠 Live Example
+## 🧠 Live Examples
 
 | Ticker | Company | Score | Risk Level | Key Signals |
-|--------|--------|------|------------|--------------|
+|--------|---------|-------|------------|-------------|
 | PLTR | Palantir | 6 | 🔴 High Risk | High P/E, strong growth, elevated P/B |
 | NVDA | NVIDIA | 8 | 🔴 Bubble Risk | Extreme valuation + momentum |
 | JPM | JPMorgan | 0 | 🟢 Stable | Low valuation, stable fundamentals |
@@ -49,32 +48,25 @@ Each stock receives a **bubble risk score + explanation signals**.
 
 ### 📈 Financial Intelligence
 - Heuristic **bubble scoring system (0–9)**
-- Multi-factor analysis:
-  - P/E ratio
-  - Forward P/E
-  - Revenue growth
-  - Price-to-book
-  - Market cap
-- Risk classification: Stable → Bubble Risk
+- Multi-factor analysis: P/E, Forward P/E, revenue growth, P/B, market cap
+- Risk classification from Stable → Bubble Risk
 
 ### ⚡ Real-time Data
-- Yahoo Finance integration (`yfinance`)
-- Live stock fundamentals
+- Yahoo Finance integration via `yfinance`
+- Live stock fundamentals and pricing
 - 6-month historical price data
 
-### 📊 Frontend Experience
+### 📊 Frontend
 - Interactive stock search
-- SVG risk score visualization
-- Price history chart (no external chart libraries)
+- SVG risk score gauge and price history chart (zero chart library dependencies)
 - Company presets for fast exploration
 - Dark UI optimized for readability
 
-### 🧩 Engineering Features
-- FastAPI backend with typed models (Pydantic)
-- Request cancellation (AbortController)
-- In-memory rate limiting
-- Structured JSON logging
-- CORS configured for Docker + browser separation
+### 🧩 Engineering
+- FastAPI backend with Pydantic v2 typed models
+- In-memory rate limiting per IP
+- Structured JSON logging with request tracing
+- CORS configurable via environment variable
 - Docker Compose full-stack deployment
 
 ---
@@ -82,7 +74,6 @@ Each stock receives a **bubble risk score + explanation signals**.
 ## 🏗️ Architecture
 
 ```
-
 Frontend (Vue 3 + Vite)
 │
 ├── StockAnalyzer UI
@@ -99,8 +90,7 @@ Backend (FastAPI)
 │
 ▼
 Yahoo Finance (yfinance)
-
-````
+```
 
 ---
 
@@ -114,14 +104,9 @@ cd ai-bubble-detector
 
 docker compose up --build
 
-# Frontend
-http://localhost
-
-# Backend API
-http://localhost:8000/docs
-````
-
----
+# Frontend:  http://localhost
+# Backend:   http://localhost:8000/docs
+```
 
 ### 💻 Local Development
 
@@ -143,16 +128,16 @@ cd frontend
 npm install
 npm run dev
 
-http://localhost:5173
+# http://localhost:5173
 ```
 
 ---
 
-## 📡 API Endpoints
+## 📡 API
 
-### GET `/stock/{ticker}`
+### `GET /stock/{ticker}`
 
-Returns stock analysis:
+Returns a full stock analysis including metrics, score, and risk signals.
 
 ```json
 {
@@ -173,9 +158,9 @@ Returns stock analysis:
 }
 ```
 
----
+### `GET /stock/{ticker}/history`
 
-### GET `/stock/{ticker}/history`
+Returns 6 months of daily closing prices.
 
 ```json
 {
@@ -190,21 +175,21 @@ Returns stock analysis:
 
 ## 🧮 Scoring System
 
-| Metric         | Condition | Score |
-| -------------- | --------- | ----- |
-| P/E            | > 40      | +2    |
-| Revenue Growth | > 30%     | +2    |
-| Price-to-Book  | > 10      | +1    |
-| Momentum       | High      | +2    |
+| Metric | Condition | Score |
+|--------|-----------|-------|
+| P/E | > 40 | +2 |
+| Revenue Growth | > 30% | +2 |
+| Price-to-Book | > 10 | +1 |
+| Momentum | High | +2 |
 
-### Interpretation
+### Risk Interpretation
 
-| Score | Label       |
-| ----- | ----------- |
-| 0–2   | Stable      |
-| 3–5   | Elevated    |
-| 6–7   | Speculative |
-| 8–9   | Bubble Risk |
+| Score | Label |
+|-------|-------|
+| 0–2 | Stable |
+| 3–5 | Elevated |
+| 6–7 | Speculative |
+| 8–9 | Bubble Risk |
 
 ---
 
@@ -215,9 +200,9 @@ cd backend
 pytest -v
 ```
 
-* API contract tests
-* scoring engine tests
-* integration tests (FastAPI TestClient)
+- API contract & integration tests (FastAPI TestClient)
+- Scoring engine unit tests
+- OpenAPI schema validation
 
 ---
 
@@ -227,57 +212,30 @@ pytest -v
 docker compose up --build
 ```
 
-Services:
-
-* Frontend → [http://localhost](http://localhost)
-* Backend → [http://localhost:8000](http://localhost:8000)
-* Docs → [http://localhost:8000/docs](http://localhost:8000/docs)
+| Service | URL |
+|---------|-----|
+| Frontend | http://localhost |
+| Backend API | http://localhost:8000 |
+| API Docs | http://localhost:8000/docs |
 
 ---
 
 ## 🛠️ Tech Stack
 
-**Backend**
+**Backend:** FastAPI, Pydantic, yfinance, Python 3.12
 
-* FastAPI
-* Pydantic
-* yfinance
-* Python 3.12
+**Frontend:** Vue 3 (Composition API), Vite, SVG-based charts
 
-**Frontend**
-
-* Vue 3 (Composition API)
-* Vite
-* SVG-based charts
-
-**Infra**
-
-* Docker
-* Docker Compose
-* Nginx (frontend serving)
+**Infra:** Docker, Docker Compose, Nginx
 
 ---
 
 ## 👤 Author
 
-**Daniel Canedo**
-
-* GitHub: [https://github.com/danacio](https://github.com/danacio)
+**Daniel Canedo** — [github.com/danacio](https://github.com/danacio)
 
 ---
 
-## ⭐ Notes
+## 📄 License
 
-This project is a **portfolio-grade financial analytics tool** demonstrating:
-
-* Full-stack architecture
-* Real-time data integration
-* UI data visualization
-* API design + validation
-* Production-ready Docker setup
-
-```
-
-
-
-
+MIT

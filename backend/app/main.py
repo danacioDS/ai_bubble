@@ -55,14 +55,11 @@ logger = logging.getLogger(__name__)
 
 app = FastAPI(title="AI Market Risk Intelligence Engine")
 
-# ✅ FIX CORS (DEV FRIENDLY)
+cors_origins = os.getenv("CORS_ORIGINS", "http://localhost,http://127.0.0.1").split(",")
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost",
-        "http://127.0.0.1",
-        "http://localhost:80",
-    ],
+    allow_origins=cors_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -167,7 +164,7 @@ class HistoryResponse(BaseModel):
 # Helpers
 # -----------------------------
 
-TICKER_RE = re.compile(r"^[A-Z]{1,5}(\.[A-Z])?$")
+TICKER_RE = re.compile(r"^[A-Z]{1,5}(\.[A-Z]{1,2})?$")
 
 
 def validate_ticker(ticker: str) -> str:

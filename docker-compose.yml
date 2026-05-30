@@ -6,6 +6,7 @@ services:
     environment:
       - CACHE_TTL=300
       - RATE_LIMIT_MAX=60
+      - CORS_ORIGINS=http://localhost,http://127.0.0.1
     restart: unless-stopped
 
   frontend:
